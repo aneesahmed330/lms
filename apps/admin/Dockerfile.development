@@ -1,0 +1,15 @@
+FROM node:20-alpine AS development
+WORKDIR /usr/src/app
+COPY ./package*.json ./
+# Install dependencies
+RUN yarn install
+COPY ./.eslintrc.js ./.eslintrc.js
+COPY ./.prettierrc ./.prettierrc
+COPY ./tsconfig.build.json ./tsconfig.build.json
+COPY ./tsconfig.json ./tsconfig.json
+COPY ./nest-cli.json ./nest-cli.json
+COPY ./libs ./libs
+COPY ./apps/admin ./apps/admin
+
+EXPOSE 3001
+CMD ["yarn","run","start:dev","admin"]

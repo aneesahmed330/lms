@@ -1,0 +1,110 @@
+services:
+  # ----------#
+  # REDIS  #
+  # ---------#
+  redis:
+    container_name: lms-redis
+    image: redis
+    ports:
+      - 6379:6379
+    volumes:
+      - lms-redis-data:/data
+
+  #----------#
+  # POSTGRES #
+  # ---------#
+  # postgres:
+  #   container_name: lms-db
+  #   image: postgres:12.2-alpine
+  #   ports:
+  #     - 5432:5432
+  #   restart: unless-stopped
+  #   volumes:
+  #     - lms-db:/var/lib/postgresql/data
+  #   environment:
+  #     POSTGRES_USER: postgres
+  #     POSTGRES_PASSWORD: postgres
+  #     POSTGRES_DB: lmsdb
+
+  #----------#
+  #   CORE   #
+  # ---------#
+  # lms-core:
+  #   container_name: lms-core
+  #   build:
+  #     context: .
+  #     dockerfile: ./apps/core/Dockerfile.development
+  #   ports:
+  #     - 3001:3001 # set according to your project setup
+  #   volumes:
+  #     - ./apps/core:/usr/src/app/apps/core
+  #     - ./libs:/usr/src/app/libs
+
+  #   restart: unless-stopped
+  #   depends_on:
+  #     - postgres
+  #     - redis
+  #   environment:
+  #     DB_TYPE: postgres
+  #     DB_SCHEMA: public
+  #     PG_HOST: local
+  #     PG_USER: postgres
+  #     PG_PASSWORD: postgres
+  #     PG_DB: lmsdb
+  #     PG_PORT: 5432
+  #     NODE_ENV: dev
+  #   env_file: ./apps/core/.env
+
+  #----------#
+  #   ADMIN  #
+  # ---------#
+  lms-admin:
+    container_name: lms-admin
+    build:
+      context: .
+      dockerfile: ./apps/admin/Dockerfile.development
+    ports:
+      - 3002:3002 # set according to your project setup
+    volumes:
+      - ./apps/admin:/usr/src/app/apps/admin
+      - ./libs:/usr/src/app/libs
+
+    restart: unless-stopped
+    depends_on:
+      # - postgres
+      - redis
+    environment:
+      NODE_ENV: dev
+    env_file: ./apps/admin/.env
+
+  #----------#
+  #  WORKER  #
+  # ---------#
+  # lms-worker:
+  #   container_name: lms-worker
+  #   build:
+  #     context: .
+  #     dockerfile: ./apps/worker/Dockerfile.development
+  #   ports:
+  #     - 3004:3004 # set according to your project setup
+  #   volumes:
+  #     - ./apps/worker:/usr/src/app/apps/worker
+  #     - ./libs:/usr/src/app/libs
+  #     - ./files:/usr/src/app/files
+
+  #   depends_on:
+  #     - postgres
+  #     - redis
+  #   environment:
+  #     DB_TYPE: postgres
+  #     DB_SCHEMA: public
+  #     PG_HOST: local
+  #     PG_USER: postgres
+  #     PG_PASSWORD: postgres
+  #     PG_DB: lmsdb
+  #     PG_PORT: 5432
+  #     NODE_ENV: dev
+  #   env_file: ./apps/worker/.env
+volumes:
+  # lms-db:
+  lms-redis-data:
