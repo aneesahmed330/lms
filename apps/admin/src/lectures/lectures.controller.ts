@@ -1,4 +1,5 @@
 import { ILectureService } from '@app/manager/lecture/lecture.service';
+import { JwtAuthGuard } from '@app/modules/auth/guard/jwt-auth.guard';
 import {
   Controller,
   Get,
@@ -7,8 +8,14 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import {
   CreateLectureDto,
   UpdateLectureDto,
@@ -16,6 +23,8 @@ import {
 import { Lecture } from 'libs/manager/entities';
 
 @ApiTags('Lectures')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('lectures') // Global lectures route
 export class LecturesController {
   constructor(private readonly lectureService: ILectureService) {}

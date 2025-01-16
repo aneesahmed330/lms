@@ -1,4 +1,5 @@
 import { ICourseService } from '@app/manager/course/course.service';
+import { JwtAuthGuard } from '@app/modules/auth/guard/jwt-auth.guard';
 import {
   Controller,
   Get,
@@ -7,9 +8,15 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
 
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import {
   CreateCourseDto,
   UpdateCourseDto,
@@ -17,6 +24,8 @@ import {
 import { Course } from 'libs/manager/entities';
 
 @ApiTags('Courses')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('courses')
 export class CoursesController {
   constructor(private readonly coursesService: ICourseService) {}

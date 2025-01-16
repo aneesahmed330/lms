@@ -1,84 +1,89 @@
 import {
-  Post,
-  Query,
   Controller,
-  UploadedFile,
-  ParseFilePipe,
-  UseInterceptors,
-  FileTypeValidator,
+  Post,
+  Get,
+  Delete,
+  Param,
   Body,
+  ParseUUIDPipe,
+  UseGuards,
 } from '@nestjs/common';
-import { Express } from 'express';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiBearerAuth, ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
-
+import {
+  ApiTags,
+  ApiOperation,
+  ApiParam,
+  ApiBody,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { IS3Service } from '@app/manager/s3/s3.service';
-import { GetUser } from 'libs/building-block/Decorators/getUser';
+import { JwtAuthGuard } from '@app/modules/auth/guard/jwt-auth.guard';
 import { IsPublic } from 'libs/building-block/Decorators/isPublic';
 
-import { SignedUrlDto } from 'libs/building-block/RequestableDTOs/file/signedUrl.dto';
-
-@ApiTags('Files')
+@ApiTags('Files') // Swagger tag for grouping
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('files')
-export class FileManagementController {
-  constructor(
-    private readonly fileManagementService: IFileManagementService,
-    private readonly s3Service: IS3Service,
-  ) {}
+export class FileController {
+  constructor(private readonly fileService: IS3Service) {}
 
-  @ApiBearerAuth()
-  @Post('excel')
-  @ApiConsumes('multipart/form-data')
+  @Post('upload-url/:lectureId')
+  @ApiOperation({ summary: 'Generate an upload URL for a file' })
+  @ApiParam({
+    name: 'lectureId',
+    description: 'UUID of the lecture to associate the file with',
+    type: String,
+  })
   @ApiBody({
+    description: 'Payload containing fileName and fileType',
     schema: {
       type: 'object',
       properties: {
-        file: {
-          type: 'string',
-          format: 'binary',
-        },
-        promotionId: {
-          type: 'string',
-        },
         fileName: {
           type: 'string',
+          description: 'Name of the file to be uploaded',
+          example: 'example.pdf',
+        },
+        fileType: {
+          type: 'string',
+          description: 'MIME type of the file to be uploaded',
+          example: 'application/pdf',
         },
       },
+      required: ['fileName', 'fileType'],
     },
   })
-  @UseInterceptors(FileInterceptor('file'))
-  async processUserExcelFile(
-    @GetUser() user: any,
-    @UploadedFile(
-      new ParseFilePipe({
-        validators: [
-          new FileTypeValidator({
-            fileType:
-              'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-          }),
-        ],
-      }),
-    )
-    file: Express.Multer.File,
-    @Body() promotion?: { promotionId: string; fileName: string },
+  @IsPublic()
+  async getUploadUrl(
+    @Param('lectureId', ParseUUIDPipe) lectureId: string,
+    @Body() body: { fileName: string; fileType: string },
   ) {
-    return await this.fileManagementService.readFile(
-      user.id,
-      file,
-      promotion.promotionId,
-      promotion.fileName,
+    return await this.fileService.generateUploadUrl(
+      lectureId,
+      body.fileName,
+      body.fileType,
     );
   }
 
-  @Post('upload')
-  @IsPublic()
-  async uploadFile(@Body() file: SignedUrlDto) {
-    return await this.s3Service.generateUrl(file.fileName, file.mimeType);
+  @Get('download-url/:fileId')
+  @ApiOperation({ summary: 'Generate a download URL for a file' })
+  @ApiParam({
+    name: 'fileId',
+    description: 'UUID of the file to download',
+    type: String,
+  })
+  async getDownloadUrl(@Param('fileId', ParseUUIDPipe) fileId: string) {
+    return await this.fileService.generateDownloadUrl(fileId);
   }
 
-  @IsPublic()
-  @Post('/getFile')
-  async getFile(@Query('fileName') fileName: string) {
-    return await this.s3Service.getFile(fileName);
+  @Delete(':fileId')
+  @ApiOperation({ summary: 'Delete a file' })
+  @ApiParam({
+    name: 'fileId',
+    description: 'UUID of the file to be deleted',
+    type: String,
+  })
+  async deleteFile(@Param('fileId', ParseUUIDPipe) fileId: string) {
+    await this.fileService.deleteFile(fileId);
+    return { message: 'File deleted successfully' };
   }
 }

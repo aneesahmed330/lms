@@ -39,8 +39,8 @@ async function bootstrap() {
 
   // swagger integration:
   const config = new DocumentBuilder()
-    .setTitle('v2incentives - Backend - admin')
-    .setDescription('v2incentives admins panel')
+    .setTitle('LMS - Backend')
+    .setDescription('LMS panel')
     .setVersion('1.0')
     .addBearerAuth()
     .build();

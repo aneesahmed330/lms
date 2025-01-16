@@ -58,6 +58,7 @@ export class LectureManagerService implements ILectureService {
       return await this.lectureRepository.find({
         relations: {
           course: true,
+          files: true,
         },
         where: { course: { id: courseId } },
       });

@@ -1,12 +1,11 @@
 import { Module } from '@nestjs/common';
 
-import { ManagerModule } from '@app/manager';
-import { BullMQModule } from '@app/manager/bullmq.module';
+import { FileController } from './fileManagement.controller';
+import { ManagerModule } from 'libs/manager';
 import { AuthModule } from '@app/modules/auth/auth.module';
-import { FileManagementController } from './fileManagement.controller';
 
 @Module({
-  imports: [ManagerModule, AuthModule, BullMQModule],
-  controllers: [FileManagementController],
+  imports: [ManagerModule, AuthModule],
+  controllers: [FileController],
 })
-export class FileManagementModule {}
+export class FileModule {}

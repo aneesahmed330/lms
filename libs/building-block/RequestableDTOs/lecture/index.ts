@@ -8,7 +8,7 @@ export class CreateLectureDto {
   })
   @IsString()
   @IsNotEmpty()
-  title: string;
+  name: string;
 
   @ApiProperty({
     description: 'The description of the lecture',

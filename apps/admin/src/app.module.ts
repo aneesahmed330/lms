@@ -8,6 +8,7 @@ import { CoursesModule } from './courses/courses.module';
 import { AuthenticationModule } from './auth/auth.module';
 import { EnhancedLoggingInterceptor } from 'libs/building-block/interceptor/log.interceptor';
 import { LecturesModule } from './lectures/lectures.module';
+import { FileModule } from './fileManagement/fileManagement.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { LecturesModule } from './lectures/lectures.module';
     UsersModule,
     CoursesModule,
     LecturesModule,
+    FileModule,
   ],
   providers: [
     {

@@ -1,137 +1,137 @@
+// file.service.ts
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { S3 } from 'aws-sdk';
 import { v4 as uuidv4 } from 'uuid';
-import { Injectable } from '@nestjs/common';
-
+import { File, Lecture } from 'libs/manager/entities';
 import { IS3Service } from './s3.service';
-import { ServiceError } from 'libs/building-block/filters/service-error';
 import * as moment from 'moment';
 
 @Injectable()
 export class S3ManagerService implements IS3Service {
-  private readonly s3Upload: S3;
-  private readonly bucketName: string;
+  private s3: S3;
 
-  constructor() {
-    this.s3Upload = new S3({
-      accessKeyId: process.env.AWS_S3_ACCESS_KEY,
-      secretAccessKey: process.env.AWS_S3_KEY_SECRET,
-      region: 'us-east-1',
+  constructor(
+    @InjectRepository(File)
+    private fileRepository: Repository<File>,
+    @InjectRepository(Lecture)
+    private lectureRepository: Repository<Lecture>,
+  ) {
+    console.log(
+      '🚀 ~ S3ManagerService ~ process.env.AWS_SECRET_ACCESS_KEY:',
+      process.env.AWS_SECRET_ACCESS_KEY,
+    );
+    console.log(
+      '🚀 ~ S3ManagerService ~ process.env.AWS_ACCESS_KEY_ID:',
+      process.env.AWS_ACCESS_KEY_ID,
+    );
+    console.log(
+      '🚀 ~ S3ManagerService ~ process.env.AWS_REGION:',
+      process.env.AWS_REGION,
+    );
+
+    this.s3 = new S3({
+      region: process.env.AWS_REGION,
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+      },
     });
-
-    this.bucketName = process.env.AWS_S3_BUCKET || 's3Bucket';
   }
 
-  async generateUrl(
+  async generateUploadUrl(
+    lectureId: string,
     fileName: string,
     fileType: string,
-  ): Promise<{ url: string; key: string }> {
-    try {
-      const ext = fileType.split('/')[1];
-      const randomId = uuidv4();
-      const key = `${randomId}.${ext}`;
-      const params = {
-        Bucket: this.bucketName,
-        Key: key,
-        Expires: moment().add(6, 'hours').milliseconds(),
-        ContentType: fileType,
-      };
-      const presignedS3Url = this.s3Upload.getSignedUrl('putObject', params);
-      return { url: presignedS3Url, key: key };
-    } catch (error) {
-      throw new ServiceError(
-        'S3 Service',
-        error.message,
-        'Error in generating URL!',
-        500,
-      );
+  ) {
+    // First check if lecture exists
+    const lecture = await this.lectureRepository.findOne({
+      where: { id: lectureId },
+    });
+
+    if (!lecture) {
+      throw new NotFoundException('Lecture not found');
     }
-  }
 
-  async getFile(key: string, hours = 6, expires = true) {
+    const fileKey = `lectures/${lectureId}/${uuidv4()}-${fileName}`;
+
+    const params = {
+      Bucket: process.env.S3_BUCKET_NAME,
+      Key: fileKey,
+      Expires: moment().add(6, 'hours').milliseconds(),
+      ContentType: fileType,
+    };
+
     try {
-      const params = {
-        Bucket: this.bucketName,
-        Key: key,
-      };
+      const uploadUrl = this.s3.getSignedUrl('putObject', params);
 
-      if (!key) {
-        return '';
-      }
-
-      const url = this.s3Upload.getSignedUrl('getObject', {
-        Bucket: params.Bucket,
-        Key: params.Key,
-        ...(expires && {
-          // Convert hours to seconds, since Expires expects seconds
-          Expires: hours * 60 * 60,
-        }),
+      // Create file record
+      const file = this.fileRepository.create({
+        key: fileKey,
+        originalName: fileName,
+        url: `https://${process.env.S3_BUCKET_NAME}.s3.amazonaws.com/${fileKey}`,
+        lecture: lecture,
       });
 
-      return url;
+      await this.fileRepository.save(file);
+
+      return {
+        uploadUrl,
+        fileKey,
+        fileId: file.id,
+      };
     } catch (error) {
-      throw new ServiceError(
-        'S3 Service',
-        error.message,
-        'Error in getting signed URL!',
-        500,
-      );
+      console.log('🚀 ~ S3ManagerService ~ error:', error);
+      throw new Error(`Failed to generate upload URL: ${error.message}`);
     }
   }
 
-  async uploadFile(file: Buffer, key: string, type?: string) {
+  async generateDownloadUrl(fileId: string) {
+    const file = await this.fileRepository.findOne({
+      where: { id: fileId },
+    });
+
+    if (!file) {
+      throw new NotFoundException('File not found');
+    }
+
+    const params = {
+      Bucket: process.env.S3_BUCKET_NAME,
+      Key: file.key,
+      Expires: 3600, // Download URL expires in 1 hour
+    };
+
     try {
-      const params = {
-        Bucket: this.bucketName,
-        Key: key,
-        Body: file,
-        ...(type && { ContentType: type }),
-      };
-      return await this.s3Upload.upload(params).promise();
-    } catch (error) {
-      throw new ServiceError(
-        'S3 Service',
-        error.message,
-        'Error in Uploading File!',
-        500,
+      const downloadUrl = await this.s3.getSignedUrlPromise(
+        'getObject',
+        params,
       );
+      return { downloadUrl };
+    } catch (error) {
+      throw new Error(`Failed to generate download URL: ${error.message}`);
     }
   }
 
-  async removeFiles(keys: string[]): Promise<void> {
+  async deleteFile(fileId: string) {
+    const file = await this.fileRepository.findOne({
+      where: { id: fileId },
+    });
+
+    if (!file) {
+      throw new NotFoundException('File not found');
+    }
+
+    const params = {
+      Bucket: process.env.S3_BUCKET_NAME,
+      Key: file.key,
+    };
+
     try {
-      if (!keys || keys.length === 0) {
-        throw new ServiceError(
-          'S3 Service',
-          'No keys provided',
-          'Error in removing files!',
-          400,
-        );
-      }
-
-      const deleteParams = {
-        Bucket: this.bucketName,
-        Delete: {
-          Objects: keys.map((key) => ({ Key: key })),
-        },
-      };
-
-      const result = await this.s3Upload.deleteObjects(deleteParams).promise();
-
-      if (result.Errors && result.Errors.length > 0) {
-        throw new ServiceError(
-          'S3 Service',
-          'Error while removing some files.',
-          `Failed to remove some files: ${result.Errors.map((err) => err.Key)}`,
-          500,
-        );
-      }
+      await this.s3.deleteObject(params).promise();
+      await this.fileRepository.remove(file);
     } catch (error) {
-      throw new ServiceError(
-        'S3 Service',
-        error.message,
-        'Error in removing files!',
-        500,
-      );
+      throw new Error(`Failed to delete file: ${error.message}`);
     }
   }
 }

@@ -12,6 +12,6 @@ export class SeedService {
     describe: 'you can use this command to seed database',
   })
   async seed() {
-    await this.userInstallerService.seedAdminUsers(AdminUsersData);
+    await this.userInstallerService.seedAdminUsers(AdmsinUsersData);
   }
 }
