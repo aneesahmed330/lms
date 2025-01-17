@@ -170,11 +170,106 @@ export class UserManagerService
   }
 
   // -----------------------
-  getUserById(id: string): Promise<any | null> {
-    throw new Error('Method not implemented.');
+  async getUserById(id: string): Promise<UserCompleteResponseDto> {
+    try {
+      const user = await this.userRepository.findOne({
+        where: { id },
+      });
+
+      if (!user) {
+        throw new ServiceError(
+          'User',
+          'User not found',
+          'User with provided id does not exist!',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
+      return this.mapper.map(user, User, UserCompleteResponseDto);
+    } catch (error) {
+      throw new ServiceError(
+        'User',
+        'Error While Fetching User!',
+        error.message ?? 'Error While Fetching User!',
+        error.status ?? HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
-  update(id: string, data: UpdateUserDto, image?: IFile): Promise<any | null> {
-    throw new Error('Method not implemented.');
+
+  async update(
+    id: string,
+    updateUserDto: UpdateUserDto,
+    image?: IFile,
+  ): Promise<UserCompleteResponseDto> {
+    try {
+      // Find the existing user
+      const user = await this.userRepository.findOne({
+        where: { id },
+      });
+
+      if (!user) {
+        throw new ServiceError(
+          'User',
+          'User not found',
+          'User with provided id does not exist!',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
+      // If email is being updated, check for duplicates
+      if (updateUserDto.email && updateUserDto.email !== user.email) {
+        const existingUser = await this.userRepository.findOne({
+          where: { email: updateUserDto.email },
+        });
+
+        if (existingUser) {
+          throw new ServiceError(
+            'User',
+            'Email already exists',
+            'A user with this email already exists!',
+            HttpStatus.BAD_REQUEST,
+          );
+        }
+      }
+
+      // If password is being updated, hash it
+      if (updateUserDto.password) {
+        updateUserDto.password = await hash(updateUserDto.password, 10);
+      }
+
+      // Handle image upload if provided
+      if (image) {
+        // Note: Implement your file upload logic here
+        // This is a placeholder for where you would:
+        // 1. Upload the image to your storage
+        // 2. Get the image URL
+        // 3. Add it to updateUserDto
+        // Example:
+        // const imageUrl = await this.uploadService.uploadFile(image);
+        // updateUserDto.imageUrl = imageUrl;
+      }
+
+      // Update the user
+      await this.userRepository.update(id, {
+        ...updateUserDto,
+        updatedDate: new Date(),
+      });
+
+      // Fetch the updated user
+      const updatedUser = await this.userRepository.findOne({
+        where: { id },
+      });
+
+      // Map and return the updated user
+      return this.mapper.map(updatedUser, User, UserCompleteResponseDto);
+    } catch (error) {
+      throw new ServiceError(
+        'User',
+        'Error While Updating User!',
+        error.message ?? 'Error While Updating User!',
+        error.status ?? HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   lookup(
@@ -183,8 +278,37 @@ export class UserManagerService
   ): Promise<UserLookupResponseDto[]> {
     throw new Error('Method not implemented.');
   }
-  delete(id: string): Promise<Record<string, unknown>> {
-    throw new Error('Method not implemented.');
+  async delete(id: string): Promise<Record<string, unknown>> {
+    try {
+      const user = await this.userRepository.findOne({
+        where: { id },
+      });
+
+      if (!user) {
+        throw new ServiceError(
+          'User',
+          'User not found',
+          'User with provided id does not exist!',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
+      // Soft delete the user
+      await this.userRepository.softDelete(id);
+
+      return {
+        status: HttpStatus.OK,
+        message: 'User deleted successfully',
+        id: id,
+      };
+    } catch (error) {
+      throw new ServiceError(
+        'User',
+        'Error While Deleting User!',
+        error.message ?? 'Error While Deleting User!',
+        error.status ?? HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
   createPassword(body: CreatePasswordDto): Promise<Record<string, unknown>> {
     throw new Error('Method not implemented.');
