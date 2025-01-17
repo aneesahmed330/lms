@@ -111,12 +111,11 @@ export class UserManagerService
     try {
       const queryBuilder = this.userRepository
         .createQueryBuilder('user')
-        .where({ isDeleted: false, userRole: UserRole.Student });
+        .where({ userRole: UserRole.Student });
 
       if (queryUserDto.email) {
         queryBuilder.where({
           email: queryUserDto.email,
-          isDeleted: false,
         });
       }
 
