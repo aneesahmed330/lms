@@ -14,7 +14,6 @@ import {
   Post,
   Query,
   Req,
-  UploadedFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -38,9 +37,8 @@ import { UserLookupDto } from 'libs/building-block/RequestableDTOs/user/lookup-u
 import { QueryUserDto } from 'libs/building-block/RequestableDTOs/user/query-user.dto';
 import { UpdateUserDto } from 'libs/building-block/RequestableDTOs/user/update-user.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { getFileValidator } from 'libs/building-block/pipes/file-validator.pipe';
-import { SupportedFileTypes } from 'libs/building-block/constants';
 import { User } from 'libs/manager/entities';
+import { AssignCoursesDto } from 'libs/building-block/RequestableDTOs/user/assign-course.dto';
 
 @ApiTags('User')
 @Controller('user')
@@ -78,8 +76,8 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @Get()
-  async getAll(@Query() queryUserDto: QueryUserDto, @GetUser() user: User) {
-    return await this.userService.getAll(queryUserDto, user);
+  async getAll(@Query() queryUserDto: QueryUserDto) {
+    return await this.userService.getAll(queryUserDto);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -109,17 +107,8 @@ export class UserController {
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileInterceptor('profileImageKey'))
   @Patch(':id')
-  async update(
-    @Param('id') id: string,
-    @Body() updateUserDto: UpdateUserDto,
-    @UploadedFile(getFileValidator(SupportedFileTypes.IMAGE_TYPE))
-    profileImageKey: Express.Multer.File,
-  ) {
-    return await this.userService.updateUser(
-      id,
-      updateUserDto,
-      profileImageKey,
-    );
+  async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+    return await this.userService.update(id, updateUserDto);
   }
 
   @ApiBearerAuth()
@@ -154,5 +143,19 @@ export class UserController {
   ) {
     const origin = request.headers.origin;
     return await this.userService.forgetPassword(user.email, origin);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiParam({
+    name: 'id',
+    description: 'id of the user',
+  })
+  @Post(':id/assign-courses')
+  async assignCourses(
+    @Param('id') id: string,
+    @Body() assignCoursesDto: AssignCoursesDto,
+  ) {
+    return await this.userService.assignCourses(id, assignCoursesDto.courseIds);
   }
 }

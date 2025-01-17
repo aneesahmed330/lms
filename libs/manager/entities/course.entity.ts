@@ -1,7 +1,8 @@
 import { AutoMap } from '@automapper/classes';
-import { Column, Entity, OneToMany } from 'typeorm';
+import { Column, Entity, ManyToMany, OneToMany } from 'typeorm';
 import { Lecture } from './lecture.entity';
 import { Audited } from './audited.entity';
+import { User } from './user.entity';
 
 @Entity()
 export class Course extends Audited {
@@ -19,4 +20,8 @@ export class Course extends Audited {
     nullable: true,
   })
   lectures: Lecture[];
+
+  @AutoMap()
+  @ManyToMany(() => User, (user) => user.courses, { nullable: true })
+  users: User[];
 }

@@ -8,8 +8,8 @@ import {
   UserWithPasswordDto,
 } from 'libs/building-block/TransferableDTOs';
 import { UserLookupResponseDto } from 'libs/building-block/TransferableDTOs/user/lookup-user.dto';
-import { User } from 'libs/manager/entities';
-import { Brackets, Repository } from 'typeorm';
+import { Course, User } from 'libs/manager/entities';
+import { Brackets, In, Repository } from 'typeorm';
 import { IUserService } from './user.service';
 import { IFile } from '@nestjs/common/pipes/file/interfaces';
 import { PageDto } from 'libs/building-block/pagination/dto/page.dto';
@@ -35,6 +35,8 @@ export class UserManagerService
     @InjectMapper() readonly mapper: Mapper,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(Course)
+    private readonly courseRepository: Repository<Course>,
   ) {
     super(mapper);
   }
@@ -318,6 +320,35 @@ export class UserManagerService
     origin: string,
   ): Promise<Record<string, unknown>> {
     throw new Error('Method not implemented.');
+  }
+
+  async assignCourses(userId: string, courseIds: string[]): Promise<User> {
+    // Find the user
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      relations: ['courses'],
+    });
+
+    if (!user) {
+      throw new ServiceError(
+        'User',
+        `User with ID ${userId} not found`,
+        `User with ID ${userId} not found`,
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    // Find all courses
+    const courses = await this.courseRepository.find({
+      where: { id: In(courseIds) },
+    });
+
+    // Assign courses to user
+    user.courses = user.courses || [];
+    user.courses = [...user.courses, ...courses];
+
+    // Save the updated user
+    return await this.userRepository.save(user);
   }
 
   override get profile() {
