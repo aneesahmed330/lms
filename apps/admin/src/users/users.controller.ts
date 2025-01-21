@@ -129,14 +129,12 @@ export class UsersController {
     );
   }
 
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
   @ApiOperation({
     summary: 'Get user courses',
     description:
       'Retrieves all courses assigned to the currently authenticated user',
   })
-  @Get('/courses')
+  @Get('/courses/getAll')
   async getUserCourses(@GetUser() user: IActiveUserData) {
     return await this.usersService.getCoursesByUserId(user.id);
   }

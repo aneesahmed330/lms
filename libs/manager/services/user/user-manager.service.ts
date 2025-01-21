@@ -371,6 +371,7 @@ export class UserManagerService
       // Return the courses array (will be empty array if no courses assigned)
       return user.courses || [];
     } catch (error) {
+      console.log('🚀 ~ getCoursesByUserId ~ error:', error);
       throw new ServiceError(
         'User',
         'Error While Fetching User Courses!',
