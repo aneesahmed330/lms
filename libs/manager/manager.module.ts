@@ -49,7 +49,7 @@ import { LectureManagerService } from './services/lecture/lecture-manager.servic
           password: process.env.POSTGRES_PASSWORD,
           database: process.env.POSTGRES_DB,
           schema: process.env.POSTGRES_SCHEMA,
-          synchronize: true,
+          synchronize: false,
           logging: false,
           autoLoadEntities: true,
           migrations: ['dist/migrations/*{.ts,.js}'],
