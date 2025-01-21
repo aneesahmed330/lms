@@ -136,10 +136,6 @@ export class UsersController {
     description:
       'Retrieves all courses assigned to the currently authenticated user',
   })
-  @ApiParam({
-    name: 'id',
-    description: 'id of the user',
-  })
   @Get('/courses')
   async getUserCourses(@GetUser() user: IActiveUserData) {
     return await this.usersService.getCoursesByUserId(user.id);
