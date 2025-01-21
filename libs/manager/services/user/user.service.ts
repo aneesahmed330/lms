@@ -4,7 +4,7 @@ import { QueryUserDto } from 'libs/building-block/RequestableDTOs/user/query-use
 import { PageDto } from 'libs/building-block/pagination/dto/page.dto';
 import { UpdateUserDto } from 'libs/building-block/RequestableDTOs/user/update-user.dto';
 
-import { User } from 'libs/manager/entities';
+import { Course, User } from 'libs/manager/entities';
 import { CreatePasswordDto } from 'libs/building-block/RequestableDTOs/user/create-password.dto';
 import { UserLookupDto } from 'libs/building-block/RequestableDTOs/user/lookup-user.dto';
 import { UserLookupResponseDto } from 'libs/building-block/TransferableDTOs/user/lookup-user.dto';
@@ -40,4 +40,5 @@ export abstract class IUserService {
   ): Promise<UserLookupResponseDto[]>;
 
   abstract assignCourses(userId: string, courseIds: string[]): Promise<User>;
+  abstract getCoursesByUserId(userId: string): Promise<Course[]>;
 }

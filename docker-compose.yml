@@ -27,35 +27,6 @@ services:
   #     POSTGRES_DB: lmsdb
 
   #----------#
-  #   CORE   #
-  # ---------#
-  # lms-core:
-  #   container_name: lms-core
-  #   build:
-  #     context: .
-  #     dockerfile: ./apps/core/Dockerfile.development
-  #   ports:
-  #     - 3001:3001 # set according to your project setup
-  #   volumes:
-  #     - ./apps/core:/usr/src/app/apps/core
-  #     - ./libs:/usr/src/app/libs
-
-  #   restart: unless-stopped
-  #   depends_on:
-  #     - postgres
-  #     - redis
-  #   environment:
-  #     DB_TYPE: postgres
-  #     DB_SCHEMA: public
-  #     PG_HOST: local
-  #     PG_USER: postgres
-  #     PG_PASSWORD: postgres
-  #     PG_DB: lmsdb
-  #     PG_PORT: 5432
-  #     NODE_ENV: dev
-  #   env_file: ./apps/core/.env
-
-  #----------#
   #   ADMIN  #
   # ---------#
   lms-admin:

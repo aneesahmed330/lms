@@ -1,4 +1,6 @@
 import { IUserService } from '@app/manager/user/user.service';
+import { JwtAuthGuard } from '@app/modules/auth/guard/jwt-auth.guard';
+import { IActiveUserData } from '@app/modules/auth/interface/active-user-data.interface';
 import {
   Controller,
   Get,
@@ -8,6 +10,7 @@ import {
   Param,
   Delete,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -16,12 +19,17 @@ import {
   ApiParam,
   ApiQuery,
   ApiBody,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
+import { GetUser } from 'libs/building-block/Decorators/getUser';
 import { CreateUserDto } from 'libs/building-block/RequestableDTOs';
+import { AssignCoursesDto } from 'libs/building-block/RequestableDTOs/user/assign-course.dto';
 import { QueryUserDto } from 'libs/building-block/RequestableDTOs/user/query-user.dto';
 import { UpdateUserDto } from 'libs/building-block/RequestableDTOs/user/update-user.dto';
 
 @ApiTags('Users')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: IUserService) {}
@@ -104,5 +112,36 @@ export class UsersController {
   @ApiResponse({ status: 404, description: 'User not found' })
   remove(@Param('id') id: string) {
     return this.usersService.delete(id);
+  }
+
+  @ApiOperation({
+    summary: 'Assign courses to user',
+    description: 'Assigns multiple courses to the currently authenticated user',
+  })
+  @Post('/assign-courses')
+  async assignCourses(
+    @GetUser() user: IActiveUserData,
+    @Body() assignCoursesDto: AssignCoursesDto,
+  ) {
+    return await this.usersService.assignCourses(
+      user.id,
+      assignCoursesDto.courseIds,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Get user courses',
+    description:
+      'Retrieves all courses assigned to the currently authenticated user',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'id of the user',
+  })
+  @Get('/courses')
+  async getUserCourses(@GetUser() user: IActiveUserData) {
+    return await this.usersService.getCoursesByUserId(user.id);
   }
 }

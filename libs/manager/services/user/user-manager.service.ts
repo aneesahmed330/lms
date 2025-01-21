@@ -351,6 +351,35 @@ export class UserManagerService
     return await this.userRepository.save(user);
   }
 
+  async getCoursesByUserId(userId: string): Promise<Course[]> {
+    try {
+      // Find the user with their courses
+      const user = await this.userRepository.findOne({
+        where: { id: userId },
+        relations: ['courses'],
+      });
+
+      if (!user) {
+        throw new ServiceError(
+          'User',
+          'User not found',
+          'User with provided id does not exist!',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
+      // Return the courses array (will be empty array if no courses assigned)
+      return user.courses || [];
+    } catch (error) {
+      throw new ServiceError(
+        'User',
+        'Error While Fetching User Courses!',
+        error.message ?? 'Error While Fetching User Courses!',
+        error.status ?? HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   override get profile() {
     return (mapper: Mapper) => {
       createMap(mapper, User, UserCompleteResponseDto);
