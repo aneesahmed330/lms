@@ -118,13 +118,13 @@ export class UsersController {
     summary: 'Assign courses to user',
     description: 'Assigns multiple courses to the currently authenticated user',
   })
-  @Post('/assign-courses')
+  @Post(':id/assign-courses')
   async assignCourses(
-    @GetUser() user: IActiveUserData,
+    @Param('id') id: string,
     @Body() assignCoursesDto: AssignCoursesDto,
   ) {
     return await this.usersService.assignCourses(
-      user.id,
+      id,
       assignCoursesDto.courseIds,
     );
   }
