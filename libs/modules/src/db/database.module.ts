@@ -8,6 +8,7 @@ import {
   Course,
   Lecture,
   File,
+  Notification,
 } from 'libs/manager/entities';
 
 const databaseProviders = [
@@ -19,6 +20,7 @@ const databaseProviders = [
     Lecture,
     File,
     SocketEntity,
+    Notification,
   ]),
 ];
 

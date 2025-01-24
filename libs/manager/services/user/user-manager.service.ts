@@ -176,6 +176,7 @@ export class UserManagerService
     try {
       const user = await this.userRepository.findOne({
         where: { id },
+        relations: ['notifications', 'courses'],
       });
 
       if (!user) {
@@ -204,7 +205,6 @@ export class UserManagerService
     image?: IFile,
   ): Promise<UserCompleteResponseDto> {
     try {
-      // Find the existing user
       const user = await this.userRepository.findOne({
         where: { id },
       });
@@ -237,6 +237,12 @@ export class UserManagerService
       // If password is being updated, hash it
       if (updateUserDto.password) {
         updateUserDto.password = await hash(updateUserDto.password, 10);
+      }
+
+      // Handle visitorId update if provided
+      if (updateUserDto.visitorId) {
+        // You might want to add additional validation here
+        user.visitorId = updateUserDto.visitorId;
       }
 
       // Handle image upload if provided

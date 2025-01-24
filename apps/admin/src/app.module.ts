@@ -9,6 +9,7 @@ import { AuthenticationModule } from './auth/auth.module';
 import { EnhancedLoggingInterceptor } from 'libs/building-block/interceptor/log.interceptor';
 import { LecturesModule } from './lectures/lectures.module';
 import { FileModule } from './fileManagement/fileManagement.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { FileModule } from './fileManagement/fileManagement.module';
     CoursesModule,
     LecturesModule,
     FileModule,
+    NotificationsModule,
   ],
   providers: [
     {

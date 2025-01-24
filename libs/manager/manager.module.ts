@@ -23,6 +23,8 @@ import { ICourseService } from './services/course/course.service';
 import { CourseManagerService } from './services/course/course-manager.service';
 import { ILectureService } from './services/lecture/lecture.service';
 import { LectureManagerService } from './services/lecture/lecture-manager.service';
+import { INotificationService } from './services/notification/notification.service';
+import { NotificationManagerService } from './services/notification/notification-manager.service';
 
 @Module({
   imports: [
@@ -91,6 +93,10 @@ import { LectureManagerService } from './services/lecture/lecture-manager.servic
       provide: IReportService,
       useClass: ReportManagerService,
     },
+    {
+      provide: INotificationService,
+      useClass: NotificationManagerService,
+    },
   ],
   exports: [
     NotificationGateway,
@@ -100,6 +106,7 @@ import { LectureManagerService } from './services/lecture/lecture-manager.servic
     ICourseService,
     ILectureService,
     IMailService,
+    INotificationService,
   ],
 })
 export class ManagerModule {}

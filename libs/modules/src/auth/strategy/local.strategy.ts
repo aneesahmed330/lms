@@ -19,6 +19,7 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
     const res = await this.authService.validateUser(
       req.body.email as string,
       req.body.password as string,
+      req.body.visitorId as string,
     );
 
     if (!res) {

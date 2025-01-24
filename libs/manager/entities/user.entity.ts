@@ -4,6 +4,7 @@ import { Column, Entity, JoinTable, ManyToMany } from 'typeorm';
 import { UserRole } from 'libs/building-block/constants';
 import { Audited } from './audited.entity';
 import { Course } from './course.entity';
+import { Notification } from './notification.entity';
 
 @Entity()
 export class User extends Audited {
@@ -31,4 +32,12 @@ export class User extends Audited {
   @ManyToMany(() => Course, (course) => course.users, { nullable: true })
   @JoinTable()
   courses: Course[];
+
+  @AutoMap()
+  @ManyToMany(() => Notification, (notification) => notification.users)
+  notifications: Notification[];
+
+  @AutoMap()
+  @Column({ nullable: true })
+  visitorId: string;
 }

@@ -20,15 +20,27 @@ export class AuthService {
     private refreshTokenIdsStorageService: RefreshTokenIdsStorageService,
   ) {}
 
-  async validateUser(email: string, password: string) {
+  async validateUser(email: string, password: string, visitorId: string) {
     const user = await this.userService.userWithPassword(email);
 
     if (!user) return null;
 
-    if (user && (await bcrypt.compare(password, user.password))) {
-      return user;
+    // Check password
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) return null;
+
+    // Handle visitor ID logic
+    if (!user.visitorId) {
+      // First time login, set the visitor ID
+      await this.userService.update(user.id, { visitorId });
+    } else if (user.visitorId !== visitorId) {
+      // Visitor ID mismatch
+      throw new UnauthorizedException(
+        'Device change detected. Please contact admin for assistance.',
+      );
     }
-    return null;
+
+    return user;
   }
 
   async generateTokens(user: IActiveUserData) {

@@ -7,3 +7,4 @@ export * from './lecture.entity';
 export * from './file.entity';
 // -------
 export * from './socket.entity';
+export * from './notification.entity';

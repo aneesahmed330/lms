@@ -24,9 +24,10 @@ export class LoginUserDto {
   userRole: string;
 
   @ApiProperty({
-    description: 'device id of the user',
+    description: 'Visitor ID for device tracking',
+    required: true,
   })
   @IsString()
   @IsOptional()
-  deviceId?: string;
+  visitorId?: string;
 }
