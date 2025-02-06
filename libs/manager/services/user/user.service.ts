@@ -41,4 +41,6 @@ export abstract class IUserService {
 
   abstract assignCourses(userId: string, courseIds: string[]): Promise<User>;
   abstract getCoursesByUserId(userId: string): Promise<Course[]>;
+
+  abstract resetVisitorId(userId: string): Promise<UserCompleteResponseDto>;
 }

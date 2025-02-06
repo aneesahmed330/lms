@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  HttpStatus,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -11,6 +12,7 @@ import { IActiveUserData } from './interface/active-user-data.interface';
 
 import { RefreshTokenDto } from 'libs/building-block/RequestableDTOs';
 import { IUserService } from 'libs/manager/services/user/user.service';
+import { ServiceError } from 'libs/building-block/filters/service-error';
 
 @Injectable()
 export class AuthService {
@@ -21,26 +23,38 @@ export class AuthService {
   ) {}
 
   async validateUser(email: string, password: string, visitorId: string) {
-    const user = await this.userService.userWithPassword(email);
+    try {
+      const user = await this.userService.userWithPassword(email);
 
-    if (!user) return null;
+      if (!user) return null;
 
-    // Check password
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) return null;
+      // Check password
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+      if (!isPasswordValid) return null;
 
-    // Handle visitor ID logic
-    if (!user.visitorId) {
-      // First time login, set the visitor ID
-      await this.userService.update(user.id, { visitorId });
-    } else if (user.visitorId !== visitorId) {
-      // Visitor ID mismatch
-      throw new UnauthorizedException(
-        'Device change detected. Please contact admin for assistance.',
+      // Handle visitor ID logic
+      if (!user.visitorId) {
+        // First time login, set the visitor ID
+        await this.userService.update(user.id, { visitorId });
+      } else if (user.visitorId !== visitorId) {
+        // Visitor ID mismatch
+        throw new ServiceError(
+          'User',
+          'Device Id does not match!',
+          'Device Id does not match!',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      return user;
+    } catch (err) {
+      throw new ServiceError(
+        'User',
+        'Something went wrong!',
+        err.message ?? 'Something went wrong!',
+        err.status ?? HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
-
-    return user;
   }
 
   async generateTokens(user: IActiveUserData) {

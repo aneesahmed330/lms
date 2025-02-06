@@ -138,4 +138,23 @@ export class UsersController {
   async getUserCourses(@GetUser() user: IActiveUserData) {
     return await this.usersService.getCoursesByUserId(user.id);
   }
+
+  @ApiOperation({
+    summary: 'Reset visitor ID',
+    description: 'Resets the visitor ID of a student to empty',
+  })
+  @ApiParam({
+    name: 'id',
+    required: true,
+    description: 'Should be a valid user id',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'The visitor ID has been successfully reset.',
+  })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  @Patch(':id/reset-visitor')
+  async resetVisitorId(@Param('id') id: string) {
+    return await this.usersService.resetVisitorId(id);
+  }
 }

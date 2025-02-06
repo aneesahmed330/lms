@@ -395,5 +395,34 @@ export class UserManagerService
     };
   }
 
+  async resetVisitorId(userId: string): Promise<UserCompleteResponseDto> {
+    try {
+      const user = await this.userRepository.findOne({
+        where: { id: userId },
+      });
+
+      if (!user) {
+        throw new ServiceError(
+          'User',
+          'User not found',
+          'User with provided id does not exist!',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
+      user.visitorId = '';
+      await this.userRepository.save(user);
+
+      return this.mapper.map(user, User, UserCompleteResponseDto);
+    } catch (error) {
+      throw new ServiceError(
+        'User',
+        'Error While Resetting Visitor ID!',
+        error.message ?? 'Error While Resetting Visitor ID!',
+        error.status ?? HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   //-----
 }
